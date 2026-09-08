@@ -2,7 +2,7 @@ from bottle import Bottle, run, static_file, template, TEMPLATE_PATH, response, 
 import json
 from teams import team_app
 from players import player_app
-
+from coaches import coach_app
 from games import games_app
 
 from database import query_db, init_db
@@ -13,7 +13,7 @@ TEMPLATE_PATH.append('./templates')
 app = Bottle()
 app.mount("/team", team_app)
 app.mount("/player", player_app)
-
+app.mount("/coach", coach_app)
 app.mount("/games", games_app)
 
 

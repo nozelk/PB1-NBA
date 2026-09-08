@@ -52,6 +52,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {{ 'active' if get('page', '') == 'coaches' else '' }}" href="/coach/">
+                            <i class="bi bi-clipboard-data me-1"></i>Coaches
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {{ 'active' if get('page', '') == 'games' else '' }}" href="/games/">
                             <i class="bi bi-calendar-event me-1"></i>Games
                         </a>
