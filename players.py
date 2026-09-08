@@ -221,6 +221,16 @@ def api_player_awards(player_id):
     return json_response(data)
 
 
+@player_app.route('/api/<player_id:int>/salary-history')
+def api_player_salary(player_id):
+    data = query_db("""
+        SELECT s.season_year as season, s.salary, t.abbreviation, t.full_name as team_name, s.team_id as team_id
+        FROM salaries s
+        JOIN teams t ON s.team_id = t.id
+        WHERE s.player_id = ?
+        ORDER BY s.season_year DESC
+    """, (player_id,))
+    return json_response(data)
 
 
 # Image shortcut

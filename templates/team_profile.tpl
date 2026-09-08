@@ -24,6 +24,7 @@
         <button class="tab-btn" data-tab="charts">Charts</button>
         <button class="tab-btn" data-tab="h2h">Head to Head</button>
         <button class="tab-btn" data-tab="streaks">Streaks</button>
+        <button class="tab-btn" data-tab="salaries">Salaries</button>
     </div>
 
     <!-- Tab content -->
@@ -101,6 +102,7 @@ async function loadActiveTab() {
     else if (tab === 'charts') await loadCharts(el);
     else if (tab === 'h2h') await loadH2H(el);
     else if (tab === 'streaks') await loadStreaks(el);
+    else if (tab === 'salaries') await loadSalaries(el);
 }
 
 async function loadOverview(el) {
@@ -374,6 +376,67 @@ async function fetchH2H() {
             <div class="stat-card"><div class="stat-value" style="color:var(--accent-red);">${data.losses || 0}</div><div class="stat-label">Losses</div></div>
             <div class="stat-card"><div class="stat-value">${NBA.fmt(data.avg_pts)}</div><div class="stat-label">Avg Pts</div></div>
         </div>`;
+}
+
+async function loadSalaries(el) {
+    const data = await NBA.fetchJSON(`/team/api/${TEAM_ID}/salaries?season=${currentSeason}`);
+    const history = await NBA.fetchJSON(`/team/api/${TEAM_ID}/salaries/history`);
+    if (!data || !data.players || !data.players.length) {
+        el.innerHTML = '<p style="color:var(--text-muted);">No salary data for this season.</p>';
+        return;
+    }
+
+    el.innerHTML = `
+        <div class="stats-grid mb-4">
+            <div class="stat-card"><div class="stat-value" style="color:var(--accent-green);">$${(data.total_payroll/1e6).toFixed(1)}M</div><div class="stat-label">Total Payroll</div></div>
+            <div class="stat-card"><div class="stat-value">${data.players.length}</div><div class="stat-label">Players</div></div>
+            <div class="stat-card"><div class="stat-value">$${(data.total_payroll / data.players.length / 1e6).toFixed(1)}M</div><div class="stat-label">Avg Salary</div></div>
+            <div class="stat-card"><div class="stat-value">$${(data.players[0].salary/1e6).toFixed(1)}M</div><div class="stat-label">Highest</div></div>
+        </div>
+        ${history && history.length ? `<div class="chart-container mb-4"><canvas id="chartPayroll" height="280"></canvas></div>` : ''}
+        <div style="overflow-x:auto;">
+            <table class="table-dark-custom">
+                <thead><tr><th>#</th><th>Player</th><th>Position</th><th>Salary</th><th>% of Cap</th></tr></thead>
+                <tbody>${data.players.map((p, i) => `<tr style="cursor:pointer;" onclick="location.href='/player/${p.player_id}'">
+                    <td class="num">${i + 1}</td>
+                    <td><strong>${p.full_name}</strong></td>
+                    <td>${p.position || '-'}</td>
+                    <td class="num">$${(p.salary||0).toLocaleString('en-US')}</td>
+                    <td class="num">${(p.salary / data.total_payroll * 100).toFixed(1)}%</td>
+                </tr>`).join('')}</tbody>
+            </table>
+        </div>`;
+
+    // Payroll history chart
+    if (history && history.length) {
+        const ctx = document.getElementById('chartPayroll').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: history.map(h => seasonLabel(h.season)),
+                datasets: [{
+                    label: 'Total Payroll',
+                    data: history.map(h => h.total_payroll),
+                    backgroundColor: NBA.createGradient(ctx, NBA.GOLD),
+                    borderColor: NBA.GOLD,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Payroll History', color: '#e8e8f0' },
+                    tooltip: { callbacks: { label: (c) => '$' + (c.raw/1e6).toFixed(1) + 'M' } }
+                },
+                scales: {
+                    y: { grid: { color: 'rgba(42,42,68,0.3)' }, ticks: { callback: v => '$'+(v/1e6).toFixed(0)+'M' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
 }
 
 async function loadStreaks(el) {

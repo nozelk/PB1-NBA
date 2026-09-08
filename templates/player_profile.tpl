@@ -14,6 +14,7 @@
         <button class="tab-btn" data-tab="games">Game Log</button>
         <button class="tab-btn" data-tab="awards">Awards</button>
         <button class="tab-btn" data-tab="similar">Similar Players</button>
+        <button class="tab-btn" data-tab="salary">Salary</button>
     </div>
 
     <div id="tabContent"></div>
@@ -84,6 +85,7 @@ async function loadTab() {
     else if (tab === 'games') await loadGames(el);
     else if (tab === 'awards') await loadAwards(el);
     else if (tab === 'similar') await loadSimilar(el);
+    else if (tab === 'salary') await loadSalary(el);
 }
 
 async function loadCareer(el) {
@@ -258,4 +260,41 @@ async function loadSimilar(el) {
         </div>`;
 }
 
+async function loadSalary(el) {
+    const data = await NBA.fetchJSON(`/player/api/${PID}/salary-history`);
+    if (!data || !data.length) { el.innerHTML = '<p style="color:var(--text-muted);">No salary data available.</p>'; return; }
+
+    // data arrives sorted DESC (newest first) — table shows that order
+    // chart needs chronological ASC
+    const chartData = [...data].reverse();
+
+    el.innerHTML = `<div class="chart-container"><canvas id="chartSalary" height="300"></canvas></div>
+        <div style="overflow-x:auto;margin-top:1rem;">
+            <table class="table-dark-custom">
+                <thead><tr><th>Season</th><th>Team</th><th>Salary</th></tr></thead>
+                <tbody>${data.map(s => `<tr><td class="num">${seasonLabel(s.season)}</td><td>${teamLink(s.abbreviation, s.team_id)}</td><td class="num">$${(s.salary||0).toLocaleString('en-US')}</td></tr>`).join('')}</tbody>
+                <tfoot><tr style="border-top:2px solid var(--accent-cyan);font-weight:700;">
+                    <td colspan="2">Career Total</td>
+                    <td class="num" style="color:var(--accent-cyan);">$${data.reduce((sum,s) => sum + (s.salary||0), 0).toLocaleString('en-US')}</td>
+                </tr></tfoot>
+            </table>
+        </div>`;
+
+    const ctx = document.getElementById('chartSalary').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartData.map(s => s.abbreviation ? `${seasonLabel(s.season)} (${s.abbreviation})` : seasonLabel(s.season)),
+            datasets: [{ label: 'Salary', data: chartData.map(s => s.salary), backgroundColor: NBA.GOLD+'80', borderColor: NBA.GOLD, borderWidth: 1, borderRadius: 4 }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false }, title: { display: true, text: 'Salary History', color: '#e8e8f0' } },
+            scales: {
+                y: { grid: { color: 'rgba(42,42,68,0.3)' }, ticks: { callback: v => '$'+(v/1e6).toFixed(1)+'M' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
 </script>

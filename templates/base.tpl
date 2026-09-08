@@ -71,6 +71,11 @@
                             <i class="bi bi-arrow-left-right me-1"></i>Compare
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if get('page', '') == 'salaries' else '' }}" href="/salaries">
+                            <i class="bi bi-currency-dollar me-1"></i>Salaries
+                        </a>
+                    </li>
                 </ul>
 
                 <!-- Search -->

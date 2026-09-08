@@ -254,8 +254,32 @@ def api_team_leaders(team_id):
     })
 
 
+@team_app.route('/api/<team_id:int>/salaries')
+def api_team_salaries(team_id):
+    year = _year_param()
+    data = query_db("""
+        SELECT s.salary, s.season_year as season,
+               p.id as player_id, p.display_name as full_name, p.position
+        FROM salaries s
+        JOIN players p ON s.player_id = p.id
+        WHERE s.team_id = ? AND s.season_year = ?
+        ORDER BY s.salary DESC
+    """, (team_id, year))
+
+    total = sum(r['salary'] or 0 for r in data)
+    return json_response({'players': data, 'total_payroll': total, 'season': year})
 
 
+@team_app.route('/api/<team_id:int>/salaries/history')
+def api_team_salary_history(team_id):
+    data = query_db("""
+        SELECT s.season_year as season, SUM(s.salary) as total_payroll, COUNT(*) as player_count
+        FROM salaries s
+        WHERE s.team_id = ?
+        GROUP BY s.season_year
+        ORDER BY s.season_year
+    """, (team_id,))
+    return json_response(data)
 
 
 # Logo shortcut

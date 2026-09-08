@@ -65,6 +65,9 @@ def compare_page():
     return template('compare')
 
 
+@app.route('/salaries')
+def salaries_page():
+    return template('salaries')
 
 
 # ============================================================
@@ -303,8 +306,59 @@ def api_compare_teams():
 # ============================================================
 # SALARY API
 # ============================================================
+@app.route('/api/salaries/payroll-vs-wins')
+def api_payroll_vs_wins():
+    year = _get_season_param() or _latest_season()
+
+    data = query_db("""
+        SELECT t.id as team_id, t.full_name, t.abbreviation,
+               COALESCE(ts.payroll, total_sal.sp) as total_payroll,
+               ts.wins, ts.losses
+        FROM team_season_stats ts
+        JOIN teams t ON ts.team_id = t.id
+        LEFT JOIN (
+            SELECT team_id, season_year, SUM(salary) as sp
+            FROM salaries GROUP BY team_id, season_year
+        ) total_sal ON total_sal.team_id = ts.team_id AND total_sal.season_year = ts.season_year
+        WHERE ts.season_year = ?
+          AND COALESCE(ts.payroll, total_sal.sp) > 0
+        ORDER BY total_payroll DESC
+    """, (year,))
+
+    return json_response(data)
 
 
+@app.route('/api/salaries/best-value')
+def api_best_value():
+    year = _get_season_param() or _latest_season('salaries')
+    limit = int(request.query.get('limit', 30))
+
+    data = query_db("""
+        SELECT p.display_name as full_name, p.id as player_id,
+               t.abbreviation as team_abbreviation,
+               s.salary,
+               ROUND(CAST(ps.pts AS REAL) / NULLIF(ps.gp, 0), 1) as ppg,
+               ROUND((ps.pts + 0.4*ps.fgm - 0.7*ps.fga - 0.4*(ps.fta-ps.ftm)
+                   + 0.7*ps.oreb + 0.3*ps.dreb + ps.stl + 0.7*ps.ast
+                   + 0.7*ps.blk - 0.4*ps.pf - ps.tov) / NULLIF(ps.gp, 0), 1) as game_score,
+               ROUND(
+                   (ps.pts + 0.4*ps.fgm - 0.7*ps.fga - 0.4*(ps.fta-ps.ftm)
+                   + 0.7*ps.oreb + 0.3*ps.dreb + ps.stl + 0.7*ps.ast
+                   + 0.7*ps.blk - 0.4*ps.pf - ps.tov)
+                   / NULLIF(ps.gp, 0)
+                   / NULLIF(CAST(s.salary AS REAL) / 1000000, 0), 2
+               ) as value_score
+        FROM salaries s
+        JOIN player_season_stats ps ON ps.player_id = s.player_id
+            AND ps.season_year = s.season_year AND ps.team_id = s.team_id
+        JOIN players p ON s.player_id = p.id
+        JOIN teams t ON s.team_id = t.id
+        WHERE s.season_year = ? AND ps.gp > 40 AND s.salary > 1000000
+        ORDER BY value_score DESC
+        LIMIT ?
+    """, (year, limit))
+
+    return json_response(data)
 
 
 # ============================================================
