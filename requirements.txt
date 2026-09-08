@@ -1,2 +1,5 @@
 # Versions used for local verification with Python 3.12.1.
 bottle==0.13.2
+requests==2.31.0
+pandas==2.2.1
+nba_api==1.4.1

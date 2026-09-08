@@ -4,7 +4,7 @@ from teams import team_app
 from players import player_app
 from coaches import coach_app
 from games import games_app
-
+from admin import admin_app
 from database import query_db, init_db
 from per_utils import compute_per_for_season
 
@@ -15,7 +15,7 @@ app.mount("/team", team_app)
 app.mount("/player", player_app)
 app.mount("/coach", coach_app)
 app.mount("/games", games_app)
-
+app.mount("/nba/admin", admin_app)
 
 
 def json_response(data):
