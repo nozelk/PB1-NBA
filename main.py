@@ -3,7 +3,7 @@ import json
 from teams import team_app
 from players import player_app
 
-
+from games import games_app
 
 from database import query_db, init_db
 from per_utils import compute_per_for_season
@@ -14,7 +14,7 @@ app = Bottle()
 app.mount("/team", team_app)
 app.mount("/player", player_app)
 
-
+app.mount("/games", games_app)
 
 
 

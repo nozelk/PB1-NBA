@@ -11,6 +11,7 @@
     <div class="nav-tabs-nba">
         <button class="tab-btn active" data-tab="career">Career Stats</button>
         <button class="tab-btn" data-tab="seasons">Season by Season</button>
+        <button class="tab-btn" data-tab="games">Game Log</button>
     </div>
 
     <div id="tabContent"></div>
@@ -78,6 +79,7 @@ async function loadTab() {
 
     if (tab === 'career') await loadCareer(el);
     else if (tab === 'seasons') await loadSeasons(el);
+    else if (tab === 'games') await loadGames(el);
 }
 
 async function loadCareer(el) {
@@ -153,6 +155,59 @@ async function loadSeasons(el) {
                         <td class="num">${s.ts_pct ? (s.ts_pct*100).toFixed(1) : '-'}</td>
                         <td class="num">${s.game_score ? NBA.fmt(s.game_score) : '-'}</td>
                         <td class="num" style="color:${s.per ? (s.per >= 25 ? 'var(--accent-cyan)' : s.per >= 20 ? 'var(--accent-blue)' : 'var(--text-primary)') : 'var(--text-muted)'};">${s.per ? NBA.fmt(s.per, 2) : '-'}</td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>`;
+}
+
+async function loadGames(el) {
+    // Fetch career data to get available seasons
+    const career = await NBA.fetchJSON(`/player/api/${PID}/career`);
+    const seasons = career && career.seasons ? career.seasons.map(s => s.season) : [];
+    if (!seasons.length) { el.innerHTML = '<p style="color:var(--text-muted);">No game data available.</p>'; return; }
+    const latestSeason = seasons[0]; // seasons arrive DESC (newest first)
+
+    el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
+            <label style="color:var(--text-secondary);font-size:0.85rem;">Season:</label>
+            <select id="gameSeasonSelect" class="form-select form-select-sm" style="width:auto;background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border-color);">
+                ${seasons.map(s => `<option value="${s}">${seasonLabel(s)}</option>`).join('')}
+            </select>
+        </div>
+        <div id="gameLogBody"></div>`;
+
+    const sel = document.getElementById('gameSeasonSelect');
+    sel.addEventListener('change', () => renderGameLog(sel.value));
+    renderGameLog(latestSeason);
+}
+
+async function renderGameLog(season) {
+    const body = document.getElementById('gameLogBody');
+    if (!body) return;
+    body.innerHTML = '<div class="skeleton" style="height:200px;"></div>';
+    const data = await NBA.fetchJSON(`/player/api/${PID}/games?season=${season}&limit=82`);
+    if (!data || !data.length) { body.innerHTML = '<p style="color:var(--text-muted);">No game data for this season.</p>'; return; }
+
+    body.innerHTML = `
+        <div style="overflow-x:auto;">
+            <table class="table-dark-custom">
+                <thead><tr>
+                    <th>Date</th><th>Matchup</th><th>W/L</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>FG</th><th>3PT</th>
+                </tr></thead>
+                <tbody>
+                    ${data.map(g => `<tr>
+                        <td class="num">${g.game_date || ''}</td>
+                        <td>${g.matchup || ''}</td>
+                        <td><span class="${g.wl === 'W' ? 'badge-win' : 'badge-loss'}">${g.wl || ''}</span></td>
+                        <td class="num">${g.min || ''}</td>
+                        <td class="num"><strong>${g.pts || 0}</strong></td>
+                        <td class="num">${g.reb || 0}</td>
+                        <td class="num">${g.ast || 0}</td>
+                        <td class="num">${g.stl || 0}</td>
+                        <td class="num">${g.blk || 0}</td>
+                        <td class="num">${g.fgm || 0}-${g.fga || 0}</td>
+                        <td class="num">${g.fg3m || 0}-${g.fg3a || 0}</td>
                     </tr>`).join('')}
                 </tbody>
             </table>

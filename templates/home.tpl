@@ -6,9 +6,11 @@
         <div class="stat-card"><div class="stat-value">{{ totals['seasons'] }}</div><div class="stat-label">Seasons</div></div>
         <div class="stat-card"><div class="stat-value">{{ totals['teams'] }}</div><div class="stat-label">Teams</div></div>
         <div class="stat-card"><div class="stat-value">{{ totals['players'] }}</div><div class="stat-label">Players</div></div>
+        <div class="stat-card"><div class="stat-value">{{ totals['games'] }}</div><div class="stat-label">Games</div></div>
     </div>
     <div class="row g-4">
         <div class="col-md-6"><a class="card p-4 h-100" href="/team/" style="text-decoration:none;"><h2>Teams</h2><p style="color:var(--text-secondary);">Explore teams and their season history.</p></a></div>
         <div class="col-md-6"><a class="card p-4 h-100" href="/player/" style="text-decoration:none;"><h2>Players</h2><p style="color:var(--text-secondary);">Explore player profiles and career statistics.</p></a></div>
+        <div class="col-md-6"><a class="card p-4 h-100" href="/games/" style="text-decoration:none;"><h2>Games</h2><p style="color:var(--text-secondary);">Browse results, matchups and individual performances.</p></a></div>
     </div>
 </div>

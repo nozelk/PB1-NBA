@@ -51,6 +51,11 @@
                             <i class="bi bi-person me-1"></i>Players
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if get('page', '') == 'games' else '' }}" href="/games/">
+                            <i class="bi bi-calendar-event me-1"></i>Games
+                        </a>
+                    </li>
                 </ul>
 
                 <!-- Search -->

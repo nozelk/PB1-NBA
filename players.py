@@ -153,6 +153,20 @@ def api_player_career(player_id):
     return json_response({'seasons': seasons, 'career_averages': career})
 
 
+@player_app.route('/api/<player_id:int>/games')
+def api_player_games(player_id):
+    year = _year_param()
+    limit = int(request.query.get('limit', 82))
+
+    data = query_db("""
+        SELECT game_date, matchup, wl, min, pts, reb, ast, stl, blk,
+               fgm, fga, fg3m, fg3a, ftm, fta, tov, pf, plus_minus
+        FROM player_game_stats
+        WHERE player_id = ? AND season_year = ?
+        ORDER BY date_iso(game_date) DESC
+        LIMIT ?
+    """, (player_id, year, limit))
+    return json_response(data)
 
 
 

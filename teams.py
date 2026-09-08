@@ -89,6 +89,21 @@ def api_team_seasons(team_id):
     return json_response(data)
 
 
+@team_app.route('/api/<team_id:int>/games')
+def api_team_games(team_id):
+    year = _year_param()
+    data = query_db("""
+        SELECT g.game_date, g.matchup, g.wl, g.pts,
+               COALESCE(away_g.pts, g.opp_pts, 0) as opp_pts,
+               g.reb, g.ast, g.stl, g.blk, g.fg_pct, g.fg3_pct,
+               g.plus_minus
+        FROM games g
+        LEFT JOIN games away_g ON away_g.game_id = g.game_id
+                              AND away_g.team_id = g.opponent_id
+        WHERE g.team_id = ? AND g.season_year = ?
+        ORDER BY date_iso(g.game_date) DESC
+    """, (team_id, year))
+    return json_response(data)
 
 
 @team_app.route('/api/<team_id:int>/roster')
@@ -105,10 +120,100 @@ def api_team_roster(team_id):
     return json_response(data)
 
 
+@team_app.route('/api/<team_id:int>/h2h')
+def api_team_h2h(team_id):
+    opp_id = request.query.get('opponent_id', '0')
+    try:
+        opp_id = int(opp_id)
+    except ValueError:
+        return json_response({'error': 'Invalid opponent_id'})
+    if not opp_id:
+        return json_response({'error': 'Missing opponent_id'})
+
+    totals = query_db("""
+        SELECT COUNT(*) as total_games,
+               SUM(CASE WHEN wl = 'W' THEN 1 ELSE 0 END) as wins,
+               SUM(CASE WHEN wl = 'L' THEN 1 ELSE 0 END) as losses,
+               ROUND(AVG(pts), 1) as avg_pts
+        FROM games WHERE team_id = ? AND opponent_id = ?
+    """, (team_id, opp_id), one=True)
+
+    return json_response(totals or {'total_games': 0, 'wins': 0, 'losses': 0, 'avg_pts': 0})
 
 
+@team_app.route('/api/<team_id:int>/monthly')
+def api_team_monthly(team_id):
+    year = _year_param()
+    data = query_db("""
+        SELECT SUBSTR(game_date, 6, 2) as month,
+               SUM(CASE WHEN wl = 'W' THEN 1 ELSE 0 END) as wins,
+               SUM(CASE WHEN wl = 'L' THEN 1 ELSE 0 END) as losses,
+               ROUND(AVG(pts), 1) as avg_pts,
+               COUNT(*) as games
+        FROM games
+        WHERE team_id = ? AND season_year = ?
+        GROUP BY month ORDER BY month
+    """, (team_id, year))
+    return json_response(data)
 
 
+@team_app.route('/api/<team_id:int>/streaks')
+def api_team_streaks(team_id):
+    year = _year_param()
+
+    games = query_db("""
+        SELECT g.game_date, g.wl, g.pts,
+               COALESCE(away_g.pts, g.opp_pts, 0) as opp_pts,
+               g.matchup, g.opponent_id,
+               t_opp.abbreviation as opp_abbr
+        FROM games g
+        LEFT JOIN games away_g ON away_g.game_id = g.game_id
+                              AND away_g.team_id = g.opponent_id
+        LEFT JOIN teams t_opp ON g.opponent_id = t_opp.id
+        WHERE g.team_id = ? AND g.season_year = ?
+        ORDER BY date_iso(g.game_date)
+    """, (team_id, year))
+
+    if not games:
+        return json_response({
+            'longest_win_streak': 0, 'longest_loss_streak': 0,
+            'current_streak': '-', 'streaks': []
+        })
+
+    # Calculate streaks
+    max_w = max_l = cur = 0
+    cur_type = games[0]['wl'] if games else ''
+    cur = 1
+    max_w = 1 if cur_type == 'W' else 0
+    max_l = 1 if cur_type == 'L' else 0
+
+    for i in range(1, len(games)):
+        if games[i]['wl'] == cur_type:
+            cur += 1
+        else:
+            cur_type = games[i]['wl']
+            cur = 1
+        if cur_type == 'W' and cur > max_w:
+            max_w = cur
+        if cur_type == 'L' and cur > max_l:
+            max_l = cur
+
+    current_str = f"{cur_type}{cur}" if games else '-'
+
+    return json_response({
+        'longest_win_streak': max_w,
+        'longest_loss_streak': max_l,
+        'current_streak': current_str,
+        'streaks': [{
+            'game_date': g['game_date'],
+            'wl': g['wl'],
+            'pts': g['pts'],
+            'opp_pts': g['opp_pts'],
+            'opp_abbr': g['opp_abbr'],
+            'opponent_id': g['opponent_id'],
+            'matchup': g['matchup']
+        } for g in games]
+    })
 
 
 @team_app.route('/api/<team_id:int>/leaders')
