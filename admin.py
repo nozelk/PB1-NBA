@@ -447,39 +447,8 @@ def api_player_stats_coverage():
     _require_login()
     from collect_all import SEASON_START, SEASON_END
 
-    # Expected players per season (from player_season_stats)
-    expected_rows = query_db("""
-        SELECT season_year, COUNT(DISTINCT player_id) as expected
-        FROM player_season_stats WHERE gp >= 1
-        GROUP BY season_year ORDER BY season_year
-    """)
-    expected_map = {r['season_year']: r['expected'] for r in expected_rows}
-
-    # Collected game stats per season
-    collected_rows = query_db("""
-        SELECT season_year, COUNT(*) as total_rows,
-               COUNT(DISTINCT player_id) as collected
-        FROM player_game_stats
-        GROUP BY season_year ORDER BY season_year
-    """)
-    collected_map = {r['season_year']: {'rows': r['total_rows'], 'collected': r['collected']} for r in collected_rows}
-
-    seasons = []
-    for year in range(SEASON_START, SEASON_END + 1):
-        exp = expected_map.get(year, 0)
-        col_info = collected_map.get(year, {'rows': 0, 'collected': 0})
-        col = col_info['collected']
-        rows = col_info['rows']
-        missing = max(0, exp - col)
-        status = 'complete' if col >= exp and exp > 0 else 'partial' if col > 0 else 'empty'
-        seasons.append({
-            'season': year,
-            'expected_players': exp,
-            'collected_players': col,
-            'missing_players': missing,
-            'total_rows': rows,
-            'status': status,
-        })
+    from player_coverage import season_coverage
+    seasons = season_coverage(SEASON_START, SEASON_END)
 
     # Check active tasks
     active = {}

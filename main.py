@@ -1,5 +1,6 @@
 from bottle import Bottle, run, static_file, template, TEMPLATE_PATH, response, request
 import json
+import re
 from teams import team_app
 from players import player_app
 from coaches import coach_app
@@ -44,6 +45,12 @@ def _get_season_param():
 # ============================================================
 @app.route('/static/<filename:path>')
 def serve_static(filename):
+    # Existing views use abbreviations; bundled logo files use full team names.
+    logo = re.fullmatch(r'images/logos/([A-Z]{2,4})\.png', filename)
+    if logo:
+        team = query_db("SELECT full_name FROM teams WHERE abbreviation = ?", (logo.group(1),), one=True)
+        if team:
+            filename = 'images/logos/' + team['full_name'].replace(' ', '_') + '.png'
     return static_file(filename, root='./static')
 
 

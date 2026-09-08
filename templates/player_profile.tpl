@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         : '';
     hdr.innerHTML = `
         <img class="profile-img" src="${imgUrl}" alt="${playerInfo.full_name}"
-             onerror="this.src='https://cdn.nba.com/headshots/nba/latest/260x190/fallback.png'">
+             onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
         <div class="profile-info">
             <h1>${playerInfo.full_name}</h1>
             ${teamBadge ? `<div style="margin-bottom:0.3rem;">${teamBadge}</div>` : ''}
@@ -244,7 +244,7 @@ async function loadSimilar(el) {
                         <div style="width:48px;height:48px;border-radius:50%;background:var(--bg-secondary);overflow:hidden;flex-shrink:0;border:2px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
                             <img src="https://cdn.nba.com/headshots/nba/latest/260x190/${p.player_id}.png"
                                  style="width:100%;height:100%;object-fit:cover;"
-                                 onerror="this.parentElement.innerHTML='<i class=\\'bi bi-person\\' style=\\'font-size:1.2rem;color:var(--text-muted);\\'></i>'">
+                                 onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
                         </div>
                         <div style="flex:1;min-width:0;">
                             <div style="font-family:var(--font-display);font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.full_name}</div>

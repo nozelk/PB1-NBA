@@ -1,21 +1,20 @@
 % rebase('base.tpl', title='Dashboard', page='home')
 
 <div class="page-container">
-    <!-- Hero -->
-    <div style="text-align:center; margin-bottom:2.5rem;">
-        <h1 style="font-size:2.5rem;">
-            <span style="background:var(--gradient-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
-                NBA Analytics
-            </span>
-        </h1>
-        <p style="color:var(--text-secondary);font-size:0.95rem;max-width:600px;margin:0.5rem auto 0;">
-            Live Season Data &middot; Teams, Players, Coaches, Games &amp; Advanced Stats
-        </p>
-    </div>
+    <header class="page-heading">
+        <div>
+            <div class="eyebrow">NBA / Season archive</div>
+            <h1>League overview</h1>
+            <p>Player performance, team standings and the numbers behind each season.</p>
+        </div>
+        <div class="heading-actions">
+            <a href="/player/" class="btn btn-outline-secondary">Explore players <i class="bi bi-arrow-up-right ms-2"></i></a>
+        </div>
+    </header>
 
     <!-- ★ TOP RATED PLAYERS – PER (Player Efficiency Rating) -->
     <div class="section-header" style="margin-bottom:1rem;">
-        <h2><span class="section-icon"></span>Top Rated Players <span style="font-size:0.55em;color:var(--text-muted);font-weight:400;">PER</span></h2>
+        <h2><span class="section-icon"></span>Player efficiency leaders <span style="font-size:0.55em;color:var(--text-muted);font-weight:400;">PER</span></h2>
     </div>
     <div id="topRatedContainer" class="mb-4" style="display:flex;gap:0.75rem;overflow-x:auto;padding-bottom:0.5rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;">
         <div class="skeleton skeleton-card" style="min-width:200px;height:220px;"></div>
@@ -26,11 +25,11 @@
     <!-- ★ BEST PERFORMANCES (day/week/month tabs) -->
     <div class="mb-4" id="perfSection">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" style="margin-bottom:1rem;">
-            <h5 style="margin:0;font-family:var(--font-display);letter-spacing:1.5px;text-transform:uppercase;font-size:0.85rem;color:var(--accent-cyan);"><i class="bi bi-fire me-2" style="color:var(--accent-red);"></i>Best Performances</h5>
+            <h5 style="margin:0;font-family:var(--font-display);letter-spacing:0;font-size:0.85rem;color:var(--accent-cyan);"><i class="bi bi-fire me-2" style="color:var(--accent-red);"></i>Individual performances</h5>
             <div class="nav-tabs-nba" style="margin:0;">
-                <button class="tab-btn perf-period active" data-period="day">Today</button>
-                <button class="tab-btn perf-period" data-period="week">This Week</button>
-                <button class="tab-btn perf-period" data-period="month">This Month</button>
+                <button class="tab-btn perf-period active" data-period="day">Latest game day</button>
+                <button class="tab-btn perf-period" data-period="week">Latest week</button>
+                <button class="tab-btn perf-period" data-period="month">Latest month</button>
                 <button class="tab-btn perf-period" data-period="season">Season</button>
             </div>
         </div>
@@ -244,10 +243,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // ── Top Rated Players ──────────────────────────
+    // ── Player efficiency leaders ──────────────────────────
     loadTopRated();
 
-    // ── Best Performances (default: today) ──────────
+    // ── Individual performances (default: today) ──────────
     loadPerformances('day');
     document.querySelectorAll('.perf-period').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -283,7 +282,7 @@ function renderLeaderboard(elId, list, statKey, statLabel, color) {
 async function loadTopRated() {
     const el = document.getElementById('topRatedContainer');
     const data = await NBA.fetchJSON('/api/top-rated?limit=10');
-    if (!data || !data.length) { el.innerHTML = '<p style="color:var(--text-muted);">No data yet. Run data collection first.</p>'; return; }
+    if (!data || !data.length) { el.innerHTML = '<p style="color:var(--text-muted);">No player ratings are available for this season.</p>'; return; }
 
     // Color for PER badge
     function perColor(v) {
@@ -294,15 +293,10 @@ async function loadTopRated() {
         return 'var(--text-muted)';
     }
 
-    const borderColors = [
-        'var(--accent-cyan)','var(--accent-blue)','var(--accent-purple)',
-        'var(--accent-orange)','var(--accent-green)',
-        'var(--border-color)','var(--border-color)','var(--border-color)','var(--border-color)','var(--border-color)'
-    ];
-    const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+    const borderColors = Array(10).fill('var(--border)');
 
     el.innerHTML = data.map((p, i) => {
-        const rankLabel = i < 5 ? `<div style="font-size:1.3rem;margin-bottom:2px;">${medals[i]}</div>` : `<div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text-muted);margin-bottom:2px;">#${i+1}</div>`;
+        const rankLabel = `<div class="rank-label">${String(i + 1).padStart(2, "0")}</div>`;
         const tsPct = p.ts_pct ? (p.ts_pct * 100).toFixed(1) + '%' : '-';
         const winPct = p.team_win_pct ? (p.team_win_pct * 100).toFixed(0) + '%' : '-';
         const pmStr = p.pm_per36 != null ? (p.pm_per36 > 0 ? '+' : '') + p.pm_per36 : '-';
@@ -312,7 +306,7 @@ async function loadTopRated() {
                 <div style="width:56px;height:56px;border-radius:50%;background:var(--bg-secondary);margin:0 auto 0.5rem;display:flex;align-items:center;justify-content:center;border:2px solid ${borderColors[i]};overflow:hidden;">
                     <img src="https://cdn.nba.com/headshots/nba/latest/260x190/${p.player_id}.png"
                          style="width:100%;height:100%;object-fit:cover;"
-                         onerror="this.parentElement.innerHTML='<i class=\\'bi bi-person\\' style=\\'font-size:1.5rem;color:var(--text-muted);\\'></i>'">
+                         onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
                 </div>
                 ${rankLabel}
                 <div style="font-family:var(--font-display);font-size:0.82rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.full_name}</div>
@@ -349,16 +343,11 @@ async function loadPerformances(period) {
     section.style.display = '';
     el.style.display = 'flex';
 
-    const borderColors = [
-        'var(--accent-cyan)','var(--accent-blue)','var(--accent-purple)',
-        'var(--accent-orange)','var(--accent-green)',
-        'var(--border-color)','var(--border-color)','var(--border-color)','var(--border-color)','var(--border-color)'
-    ];
-    const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+    const borderColors = Array(10).fill('var(--border)');
 
     el.innerHTML = data.map((p, i) => {
         const wlColor = p.wl === 'W' ? 'var(--accent-green)' : 'var(--accent-red)';
-        const rankLabel = i < 5 ? `<div style="font-size:1.3rem;margin-bottom:2px;">${medals[i]}</div>` : `<div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text-muted);margin-bottom:2px;">#${i+1}</div>`;
+        const rankLabel = `<div class="rank-label">${String(i + 1).padStart(2, "0")}</div>`;
         const fgPct = p.fg_pct != null ? (p.fg_pct * 100).toFixed(0) + '%' : '-';
         const pm = p.plus_minus != null ? (p.plus_minus > 0 ? '+' : '') + parseInt(p.plus_minus) : '-';
         const pmColor = p.plus_minus > 0 ? 'var(--accent-green)' : p.plus_minus < 0 ? 'var(--accent-red)' : 'var(--text-muted)';
@@ -367,7 +356,7 @@ async function loadPerformances(period) {
                 <div style="width:56px;height:56px;border-radius:50%;background:var(--bg-secondary);margin:0 auto 0.5rem;display:flex;align-items:center;justify-content:center;border:2px solid ${borderColors[i]};overflow:hidden;">
                     <img src="https://cdn.nba.com/headshots/nba/latest/260x190/${p.player_id}.png"
                          style="width:100%;height:100%;object-fit:cover;"
-                         onerror="this.parentElement.innerHTML='<i class=\\'bi bi-person\\' style=\\'font-size:1.5rem;color:var(--text-muted);\\'></i>'">
+                         onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
                 </div>
                 ${rankLabel}
                 <div style="font-family:var(--font-display);font-size:0.82rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.full_name}</div>
@@ -436,11 +425,11 @@ async function loadStandings(season) {
 
 function buildConf(name, teams) {
     let h = `<div>
-        <div style="color:var(--accent-cyan);font-family:var(--font-display);font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:0.75rem;">${name}</div>`;
+        <div style="color:var(--accent-cyan);font-family:var(--font-display);font-size:0.75rem;letter-spacing:0;margin-bottom:0.75rem;">${name}</div>`;
     teams.forEach((t, i) => {
         h += `<a href="/team/${t.team_id}" class="standings-row" style="text-decoration:none;color:inherit;">
             <span class="rank-num">${i+1}</span>
-            <img class="team-logo-sm" src="/static/images/logos/${t.abbreviation}.png" alt="${t.abbreviation}" onerror="this.style.display='none'">
+            <img class="team-logo-sm" src="/static/images/logos/${t.abbreviation}.png" alt="${t.abbreviation}" onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
             <span style="flex:1;font-size:0.8rem;">${t.abbreviation}</span>
             <span class="record num">${t.wins}-${t.losses}</span>
         </a>`;
@@ -475,7 +464,7 @@ async function loadPlayerOfWeek() {
             <div style="width:48px;height:48px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${accent};background:var(--bg-primary);display:flex;align-items:center;justify-content:center;">
                 <img src="https://cdn.nba.com/headshots/nba/latest/260x190/${p.player_id}.png"
                      style="width:100%;height:100%;object-fit:cover;"
-                     onerror="this.parentElement.innerHTML='<i class=\\'bi bi-person\\' style=\\'font-size:1.1rem;color:var(--text-muted);\\'></i>'">
+                     onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
             </div>
             <div style="flex:1;min-width:0;">
                 <div style="font-size:0.55rem;color:${accent};text-transform:uppercase;letter-spacing:0.5px;font-family:var(--font-display);line-height:1.2;">${awardLabel} &middot; ${confLabel}</div>
@@ -529,7 +518,7 @@ function renderDivisionLeaders(leaders) {
         const pct = t.win_pct != null ? `(.${Math.round(t.win_pct * 1000).toString().padStart(3,'0')})` : '';
         return `<a href="/team/${t.team_id}" style="text-decoration:none;display:flex;align-items:center;gap:10px;padding:0.5rem 0.6rem;border-radius:6px;background:var(--bg-secondary);border:1px solid var(--border-color);transition:border-color .2s,background .2s;" onmouseenter="this.style.borderColor='var(--accent-cyan)';this.style.background='rgba(255,255,255,0.04)'" onmouseleave="this.style.borderColor='var(--border-color)';this.style.background='var(--bg-secondary)'">
             <div style="width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-                ${logoSrc ? `<img src="${logoSrc}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">` : ''}
+                ${logoSrc ? `<img src="${logoSrc}" style="width:100%;height:100%;object-fit:contain;" onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">` : ''}
             </div>
             <div style="flex:1;min-width:0;">
                 <div style="font-size:0.55rem;color:var(--text-muted);font-family:var(--font-display);text-transform:uppercase;letter-spacing:.5px;line-height:1;">${t.division}</div>

@@ -44,7 +44,7 @@ function renderTeams(teams) {
             <div class="card-body d-flex align-items-center gap-3">
                 <img src="/static/images/logos/${t.abbreviation}.png" alt="${t.abbreviation}"
                      style="width:55px;height:55px;object-fit:contain;"
-                     onerror="this.src='https://cdn.nba.com/logos/nba/${t.team_id}/primary/L/logo.svg'">
+                     onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
                 <div>
                     <div style="font-family:var(--font-display);font-size:1rem;letter-spacing:0.5px;">${t.full_name}</div>
                     <div style="display:flex;gap:8px;margin-top:4px;">

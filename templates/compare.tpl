@@ -188,11 +188,11 @@ async function compareTeams() {
     el.innerHTML = `
         <div class="row g-4 mb-4">
             <div class="col-md-6 text-center">
-                <img src="/static/images/logos/${t1.abbreviation}.png" style="width:60px;height:60px;object-fit:contain;" onerror="this.style.display='none'">
+                <img src="/static/images/logos/${t1.abbreviation}.png" style="width:60px;height:60px;object-fit:contain;" onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
                 <h3 style="color:var(--accent-cyan);">${t1.full_name || t1.abbreviation}</h3>
             </div>
             <div class="col-md-6 text-center">
-                <img src="/static/images/logos/${t2.abbreviation}.png" style="width:60px;height:60px;object-fit:contain;" onerror="this.style.display='none'">
+                <img src="/static/images/logos/${t2.abbreviation}.png" style="width:60px;height:60px;object-fit:contain;" onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
                 <h3 style="color:var(--accent-purple);">${t2.full_name || t2.abbreviation}</h3>
             </div>
         </div>

@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const hdr = document.getElementById('teamHeader');
     hdr.innerHTML = `
         <img class="profile-img" src="/static/images/logos/${teamInfo.abbreviation}.png" alt="${teamInfo.abbreviation}"
-             onerror="this.src='https://cdn.nba.com/logos/nba/${TEAM_ID}/primary/L/logo.svg'">
+             onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
         <div class="profile-info">
             <h1>${teamInfo.full_name}</h1>
             <div class="profile-meta">
@@ -181,7 +181,7 @@ function renderMiniLeader(list, key, label) {
         <a href="/player/${p.player_id}" class="standings-row" style="text-decoration:none;color:inherit;padding:6px 8px;">
             <span class="rank-num" style="font-size:0.75rem;min-width:20px;">${i+1}</span>
             <img src="https://cdn.nba.com/headshots/nba/latest/260x190/${p.player_id}.png"
-                 style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-right:6px;" onerror="this.style.display='none'">
+                 style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-right:6px;" onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
             <span style="flex:1;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.full_name}</span>
             <span class="num" style="font-weight:700;color:var(--accent-cyan);">${NBA.fmt(p[key])}</span>
             <span style="color:var(--text-muted);font-size:0.6rem;margin-left:2px;">${label}</span>
@@ -199,7 +199,7 @@ async function loadRoster(el) {
                 <div style="width:48px;height:48px;border-radius:50%;background:var(--bg-secondary);overflow:hidden;flex-shrink:0;border:2px solid var(--border-color);">
                     <img src="https://cdn.nba.com/headshots/nba/latest/260x190/${p.player_id}.png"
                          style="width:100%;height:100%;object-fit:cover;"
-                         onerror="this.parentElement.innerHTML='<i class=\\'bi bi-person\\' style=\\'font-size:1.2rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;height:100%;\\'></i>'">
+                         onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
                 </div>
                 <div>
                     <div style="font-family:var(--font-display);font-size:0.95rem;">${p.full_name}</div>
@@ -458,7 +458,7 @@ async function loadStreaks(el) {
                 return `<a href="/team/${g.opponent_id}" class="card" style="text-decoration:none;border-color:${borderClr};background:${bgClr};padding:10px 12px;">
                     <div style="display:flex;align-items:center;gap:8px;">
                         <img src="/static/images/logos/${g.opp_abbr}.png" style="width:28px;height:28px;"
-                             onerror="this.src='https://cdn.nba.com/logos/nba/${g.opponent_id}/primary/L/logo.svg'">
+                             onerror="this.onerror=null;this.src='/static/images/player-placeholder.svg';">
                         <div style="flex:1;min-width:0;">
                             <div style="font-family:var(--font-display);font-size:0.8rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                 vs ${g.opp_abbr || '???'}
