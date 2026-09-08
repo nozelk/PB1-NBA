@@ -4,8 +4,9 @@
     <p class="mb-4" style="color:var(--text-secondary);">Explore NBA history, season statistics and performance.</p>
     <div class="stats-grid mb-4">
         <div class="stat-card"><div class="stat-value">{{ totals['seasons'] }}</div><div class="stat-label">Seasons</div></div>
+        <div class="stat-card"><div class="stat-value">{{ totals['teams'] }}</div><div class="stat-label">Teams</div></div>
     </div>
     <div class="row g-4">
-        <div class="col-12"><div class="card p-4"><h2>NBA history</h2><p>Season records and statistics from the NBA.</p><img src="/static/images/LogoNBA.png" alt="NBA" style="max-width:180px;"></div></div>
+        <div class="col-md-6"><a class="card p-4 h-100" href="/team/" style="text-decoration:none;"><h2>Teams</h2><p style="color:var(--text-secondary);">Explore teams and their season history.</p></a></div>
     </div>
 </div>

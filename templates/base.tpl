@@ -41,6 +41,11 @@
                             <i class="bi bi-house-door me-1"></i>Home
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if get('page', '') == 'teams' else '' }}" href="/team/">
+                            <i class="bi bi-people me-1"></i>Teams
+                        </a>
+                    </li>
                 </ul>
 
 

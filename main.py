@@ -1,6 +1,6 @@
 from bottle import Bottle, run, static_file, template, TEMPLATE_PATH, response, request
 import json
-
+from teams import team_app
 
 
 
@@ -11,7 +11,7 @@ from database import query_db, init_db
 TEMPLATE_PATH.append('./templates')
 
 app = Bottle()
-
+app.mount("/team", team_app)
 
 
 
