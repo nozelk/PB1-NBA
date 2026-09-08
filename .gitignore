@@ -1,0 +1,14 @@
+*.db
+__pycache__
+*.json
+api_key.txt
+.DS_Store
+*.zip
+serije.csv
+test.py
+filmi.csv
+.venv/
+*.db-journal
+*.db-wal
+*.db-shm
+.env
