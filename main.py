@@ -1,18 +1,18 @@
 from bottle import Bottle, run, static_file, template, TEMPLATE_PATH, response, request
 import json
 from teams import team_app
-
+from players import player_app
 
 
 
 from database import query_db, init_db
-
+from per_utils import compute_per_for_season
 
 TEMPLATE_PATH.append('./templates')
 
 app = Bottle()
 app.mount("/team", team_app)
-
+app.mount("/player", player_app)
 
 
 
@@ -94,6 +94,23 @@ def home():
 # ============================================================
 # SEARCH API
 # ============================================================
+@app.route('/api/search')
+def api_search():
+    q = request.query.get('q', '').strip()
+    if len(q) < 2:
+        return json_response({'players': [], 'teams': []})
+
+    players = query_db("""
+        SELECT id as player_id, display_name as full_name, position
+        FROM players WHERE display_name LIKE ? LIMIT 10
+    """, (f"%{q}%",))
+
+    teams = query_db("""
+        SELECT id as team_id, full_name, abbreviation
+        FROM teams WHERE full_name LIKE ? OR abbreviation LIKE ? LIMIT 10
+    """, (f"%{q}%", f"%{q}%"))
+
+    return json_response({'players': players, 'teams': teams})
 
 
 # ============================================================

@@ -19,6 +19,7 @@
     <!-- Tabs -->
     <div class="nav-tabs-nba" id="teamTabs">
         <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="roster">Roster</button>
     </div>
 
     <!-- Tab content -->
@@ -91,10 +92,14 @@ async function loadActiveTab() {
     NBA.showLoading(el);
 
     if (tab === 'overview') await loadOverview(el);
+    else if (tab === 'roster') await loadRoster(el);
 }
 
 async function loadOverview(el) {
-    const seasons = await NBA.fetchJSON(`/team/api/${TEAM_ID}/seasons`);
+    const [seasons, leaders] = await Promise.all([
+        NBA.fetchJSON(`/team/api/${TEAM_ID}/seasons`),
+        NBA.fetchJSON(`/team/api/${TEAM_ID}/leaders?season=${currentSeason}`)
+    ]);
     if (!seasons) { NBA.showError(el); return; }
     const s = seasons.find(x => x.season == currentSeason) || seasons[0];
     if (!s) { el.innerHTML = '<p class="text-muted">No season data.</p>'; return; }
@@ -113,6 +118,26 @@ async function loadOverview(el) {
             <div class="stat-card"><div class="stat-value">${divRank}</div><div class="stat-label">Conf Rank</div></div>
             <div class="stat-card"><div class="stat-value">${teamInfo.division || '-'}</div><div class="stat-label">Division</div></div>
         </div>
+
+        <!-- Team Leaders -->
+        ${leaders ? `
+        <div class="section-header" style="margin-bottom:1rem;">
+            <h2 style="font-size:1rem;"><span class="section-icon"></span>Team Leaders &mdash; ${seasonLabel(currentSeason)}</h2>
+        </div>
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card h-100"><div class="card-header"><h5 style="margin:0;font-size:0.85rem;"><i class="bi bi-trophy me-2" style="color:var(--accent-cyan);"></i>Scoring</h5></div>
+                <div class="card-body" style="padding:0.5rem;">${renderMiniLeader(leaders.scorers, 'ppg', 'PPG')}</div></div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100"><div class="card-header"><h5 style="margin:0;font-size:0.85rem;"><i class="bi bi-arrow-repeat me-2" style="color:var(--accent-purple);"></i>Rebounds</h5></div>
+                <div class="card-body" style="padding:0.5rem;">${renderMiniLeader(leaders.rebounders, 'rpg', 'RPG')}</div></div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100"><div class="card-header"><h5 style="margin:0;font-size:0.85rem;"><i class="bi bi-hand-index me-2" style="color:var(--accent-blue);"></i>Assists</h5></div>
+                <div class="card-body" style="padding:0.5rem;">${renderMiniLeader(leaders.assisters, 'apg', 'APG')}</div></div>
+            </div>
+        </div>` : ''}
 
         <!-- Season Charts -->
         <div class="row g-4">
@@ -138,6 +163,44 @@ async function loadOverview(el) {
             options:{ responsive:true, plugins:{ legend:{labels:{color:'#e8e8f0'}}, title:{display:true,text:'Wins / Losses by Season',color:'#e8e8f0'} }, scales:{ y:{grid:{color:'rgba(42,42,68,0.3)'},beginAtZero:true, stacked:true}, x:{grid:{display:false}, stacked:true} } }
         });
     }
+}
+
+function renderMiniLeader(list, key, label) {
+    if (!list || !list.length) return '<p style="color:var(--text-muted);font-size:0.8rem;">No data</p>';
+    return list.map((p, i) => `
+        <a href="/player/${p.player_id}" class="standings-row" style="text-decoration:none;color:inherit;padding:6px 8px;">
+            <span class="rank-num" style="font-size:0.75rem;min-width:20px;">${i+1}</span>
+            <img src="https://cdn.nba.com/headshots/nba/latest/260x190/${p.player_id}.png"
+                 style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-right:6px;" onerror="this.style.display='none'">
+            <span style="flex:1;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.full_name}</span>
+            <span class="num" style="font-weight:700;color:var(--accent-cyan);">${NBA.fmt(p[key])}</span>
+            <span style="color:var(--text-muted);font-size:0.6rem;margin-left:2px;">${label}</span>
+        </a>`
+    ).join('');
+}
+
+async function loadRoster(el) {
+    const roster = await NBA.fetchJSON(`/team/api/${TEAM_ID}/roster?season=${currentSeason}`);
+    if (!roster || !roster.length) { el.innerHTML = '<p style="color:var(--text-muted);">No roster data.</p>'; return; }
+
+    el.innerHTML = `<div class="roster-grid">
+        ${roster.map(p => `
+            <a href="/player/${p.player_id}" class="featured-card animate-in" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;">
+                <div style="width:48px;height:48px;border-radius:50%;background:var(--bg-secondary);overflow:hidden;flex-shrink:0;border:2px solid var(--border-color);">
+                    <img src="https://cdn.nba.com/headshots/nba/latest/260x190/${p.player_id}.png"
+                         style="width:100%;height:100%;object-fit:cover;"
+                         onerror="this.parentElement.innerHTML='<i class=\\'bi bi-person\\' style=\\'font-size:1.2rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;height:100%;\\'></i>'">
+                </div>
+                <div>
+                    <div style="font-family:var(--font-display);font-size:0.95rem;">${p.full_name}</div>
+                    <div style="display:flex;gap:6px;margin-top:4px;">
+                        <span class="badge-position">${p.position || '?'}</span>
+                        ${p.jersey_number ? `<span style="color:var(--text-muted);font-size:0.75rem;">#${p.jersey_number}</span>` : ''}
+                    </div>
+                </div>
+            </a>
+        `).join('')}
+    </div>`;
 }
 
 </script>

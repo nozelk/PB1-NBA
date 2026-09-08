@@ -46,9 +46,19 @@
                             <i class="bi bi-people me-1"></i>Teams
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if get('page', '') == 'players' else '' }}" href="/player/">
+                            <i class="bi bi-person me-1"></i>Players
+                        </a>
+                    </li>
                 </ul>
 
-
+                <!-- Search -->
+                <div class="search-box">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" id="globalSearch" placeholder="Search players, teams..." autocomplete="off">
+                    <div class="search-results" id="searchResults"></div>
+                </div>
             </div>
         </div>
     </nav>

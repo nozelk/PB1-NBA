@@ -91,6 +91,18 @@ def api_team_seasons(team_id):
 
 
 
+@team_app.route('/api/<team_id:int>/roster')
+def api_team_roster(team_id):
+    year = _year_param()
+    data = query_db("""
+        SELECT p.id as player_id, p.display_name as full_name,
+               p.position, r.jersey_num as jersey_number
+        FROM rosters r
+        JOIN players p ON r.player_id = p.id
+        WHERE r.team_id = ? AND r.season_year = ?
+        ORDER BY p.display_name
+    """, (team_id, year))
+    return json_response(data)
 
 
 
@@ -99,6 +111,42 @@ def api_team_seasons(team_id):
 
 
 
+@team_app.route('/api/<team_id:int>/leaders')
+def api_team_leaders(team_id):
+    year = _year_param()
+    # Get top players from this team for the given season
+    scorers = query_db("""
+        SELECT p.id as player_id, p.display_name as full_name,
+               ROUND(CAST(ps.pts AS REAL)/NULLIF(ps.gp,0),1) as ppg,
+               ps.gp
+        FROM player_season_stats ps
+        JOIN players p ON ps.player_id = p.id
+        WHERE ps.team_id = ? AND ps.season_year = ?
+        ORDER BY ppg DESC LIMIT 5
+    """, (team_id, year))
+    rebounders = query_db("""
+        SELECT p.id as player_id, p.display_name as full_name,
+               ROUND(CAST(ps.reb AS REAL)/NULLIF(ps.gp,0),1) as rpg,
+               ps.gp
+        FROM player_season_stats ps
+        JOIN players p ON ps.player_id = p.id
+        WHERE ps.team_id = ? AND ps.season_year = ?
+        ORDER BY rpg DESC LIMIT 5
+    """, (team_id, year))
+    assisters = query_db("""
+        SELECT p.id as player_id, p.display_name as full_name,
+               ROUND(CAST(ps.ast AS REAL)/NULLIF(ps.gp,0),1) as apg,
+               ps.gp
+        FROM player_season_stats ps
+        JOIN players p ON ps.player_id = p.id
+        WHERE ps.team_id = ? AND ps.season_year = ?
+        ORDER BY apg DESC LIMIT 5
+    """, (team_id, year))
+    return json_response({
+        'scorers': scorers,
+        'rebounders': rebounders,
+        'assisters': assisters
+    })
 
 
 
