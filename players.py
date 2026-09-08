@@ -169,8 +169,56 @@ def api_player_games(player_id):
     return json_response(data)
 
 
+@player_app.route('/api/<player_id:int>/similar')
+def api_similar_players(player_id):
+    # Use career averages for similarity
+    data = query_db("""
+        WITH target AS (
+            SELECT player_id,
+                   CAST(SUM(pts) AS REAL)/NULLIF(SUM(gp),0) as ppg,
+                   CAST(SUM(reb) AS REAL)/NULLIF(SUM(gp),0) as rpg,
+                   CAST(SUM(ast) AS REAL)/NULLIF(SUM(gp),0) as apg,
+                   CAST(SUM(stl) AS REAL)/NULLIF(SUM(gp),0) as spg,
+                   CAST(SUM(blk) AS REAL)/NULLIF(SUM(gp),0) as bpg
+            FROM player_season_stats WHERE player_id = ?
+        ),
+        others AS (
+            SELECT ps.player_id,
+                   CAST(SUM(ps.pts) AS REAL)/NULLIF(SUM(ps.gp),0) as ppg,
+                   CAST(SUM(ps.reb) AS REAL)/NULLIF(SUM(ps.gp),0) as rpg,
+                   CAST(SUM(ps.ast) AS REAL)/NULLIF(SUM(ps.gp),0) as apg,
+                   CAST(SUM(ps.stl) AS REAL)/NULLIF(SUM(ps.gp),0) as spg,
+                   CAST(SUM(ps.blk) AS REAL)/NULLIF(SUM(ps.gp),0) as bpg
+            FROM player_season_stats ps
+            WHERE ps.player_id != ?
+            GROUP BY ps.player_id
+            HAVING SUM(ps.gp) > 50
+        )
+        SELECT p.display_name as full_name, o.player_id,
+               ROUND(o.ppg, 1) as ppg, ROUND(o.rpg, 1) as rpg, ROUND(o.apg, 1) as apg,
+               ROUND(SQRT(
+                   (t.ppg - o.ppg)*(t.ppg - o.ppg) +
+                   (t.rpg - o.rpg)*(t.rpg - o.rpg) +
+                   (t.apg - o.apg)*(t.apg - o.apg) +
+                   (t.spg - o.spg)*(t.spg - o.spg) +
+                   (t.bpg - o.bpg)*(t.bpg - o.bpg)
+               ), 2) as distance
+        FROM target t, others o
+        JOIN players p ON o.player_id = p.id
+        ORDER BY distance ASC
+        LIMIT 10
+    """, (player_id, player_id))
+    return json_response(data)
 
 
+@player_app.route('/api/<player_id:int>/awards')
+def api_player_awards(player_id):
+    data = query_db("""
+        SELECT award_type, season_year as season, description
+        FROM awards WHERE player_id = ?
+        ORDER BY season_year DESC
+    """, (player_id,))
+    return json_response(data)
 
 
 

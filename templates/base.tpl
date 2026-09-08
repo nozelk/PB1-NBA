@@ -61,6 +61,16 @@
                             <i class="bi bi-calendar-event me-1"></i>Games
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if get('page', '') == 'leaders' else '' }}" href="/leaders">
+                            <i class="bi bi-trophy me-1"></i>Leaders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if get('page', '') == 'compare' else '' }}" href="/compare">
+                            <i class="bi bi-arrow-left-right me-1"></i>Compare
+                        </a>
+                    </li>
                 </ul>
 
                 <!-- Search -->

@@ -12,6 +12,8 @@
         <button class="tab-btn active" data-tab="career">Career Stats</button>
         <button class="tab-btn" data-tab="seasons">Season by Season</button>
         <button class="tab-btn" data-tab="games">Game Log</button>
+        <button class="tab-btn" data-tab="awards">Awards</button>
+        <button class="tab-btn" data-tab="similar">Similar Players</button>
     </div>
 
     <div id="tabContent"></div>
@@ -80,6 +82,8 @@ async function loadTab() {
     if (tab === 'career') await loadCareer(el);
     else if (tab === 'seasons') await loadSeasons(el);
     else if (tab === 'games') await loadGames(el);
+    else if (tab === 'awards') await loadAwards(el);
+    else if (tab === 'similar') await loadSimilar(el);
 }
 
 async function loadCareer(el) {
@@ -211,6 +215,46 @@ async function renderGameLog(season) {
                     </tr>`).join('')}
                 </tbody>
             </table>
+        </div>`;
+}
+
+async function loadAwards(el) {
+    const data = await NBA.fetchJSON(`/player/api/${PID}/awards`);
+    if (!data || !data.length) { el.innerHTML = '<p style="color:var(--text-muted);">No awards on record.</p>'; return; }
+
+    el.innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${data.map(a => `<div class="badge-award" style="padding:8px 16px;font-size:0.85rem;">
+            <i class="bi bi-trophy me-1"></i>${a.description || a.award_type || 'Award'} ${a.season ? `(${seasonLabel(a.season)})` : ''}
+        </div>`).join('')}
+    </div>`;
+}
+
+async function loadSimilar(el) {
+    const data = await NBA.fetchJSON(`/player/api/${PID}/similar`);
+    if (!data || !data.length) { el.innerHTML = '<p style="color:var(--text-muted);">Not enough data for similarity.</p>'; return; }
+
+    el.innerHTML = `
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1rem;">Players with similar career averages (Euclidean distance on PPG, RPG, APG, SPG, BPG)</p>
+        <div class="roster-grid">
+            ${data.map((p, i) => `
+                <a href="/player/${p.player_id}" class="featured-card animate-in" style="text-decoration:none;color:inherit;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div style="width:48px;height:48px;border-radius:50%;background:var(--bg-secondary);overflow:hidden;flex-shrink:0;border:2px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+                            <img src="https://cdn.nba.com/headshots/nba/latest/260x190/${p.player_id}.png"
+                                 style="width:100%;height:100%;object-fit:cover;"
+                                 onerror="this.parentElement.innerHTML='<i class=\\'bi bi-person\\' style=\\'font-size:1.2rem;color:var(--text-muted);\\'></i>'">
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-family:var(--font-display);font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.full_name}</div>
+                            <div style="color:var(--text-muted);font-size:0.75rem;">
+                                ${NBA.fmt(p.ppg)} ppg &middot; ${NBA.fmt(p.rpg)} rpg &middot; ${NBA.fmt(p.apg)} apg
+                            </div>
+                            <div style="color:var(--accent-cyan);font-size:0.7rem;margin-top:2px;">Distance: ${NBA.fmt(p.distance, 2)}</div>
+                        </div>
+                        <span class="rank" style="font-size:1.2rem;">${i+1}</span>
+                    </div>
+                </a>
+            `).join('')}
         </div>`;
 }
 
